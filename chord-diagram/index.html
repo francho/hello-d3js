@@ -22,9 +22,7 @@
       ideas: []
     };
 
-    readme.query(function(data) {
-      $scope.data.ideas = data;
-    });
+    $scope.data.ideas = readme.query();
   });
 
   app.directive('spnGraph', function($timeout) {
@@ -66,6 +64,7 @@
 
           // Returns the Flare package name for the given class name.
           function name(name) {
+            return name;
             return name.substring(0, name.lastIndexOf(".")).substring(6);
           }
 
