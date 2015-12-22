@@ -37,6 +37,11 @@
   var link = svg.append("g").selectAll(".link"),
     node = svg.append("g").selectAll(".node");
 
+  var lineFunction = d3.svg.line()
+    .x(function(d,i) { return i*50; })
+    .y(function(d,i) { return 0; })
+    .interpolate(function(points) { return points.join("A -1,1 1 0 1"); });
+
   d3.json("data.json", function(error, ideas) {
     if (error) throw error;
 
@@ -45,7 +50,7 @@
       .range([5, width-r])
       .domain([1,51]);
 
-    node = node
+    labels = node
       .data(ideas)
       .enter().append("text")
       .attr("class", "node")
@@ -65,17 +70,24 @@
         return d.name;
       });
 
-    var lineFunction = d3.svg.line()
-      .x(function(d,i) { return i*50; })
-      .y(function(d,i) { return 0; })
-      .interpolate("basis");
-    var lineGraph = svg.append("path")
+    console.log(labels);
+    connections = link
+      .data(ideas)
+      .enter().append("path")
+      .attr("d", lineFunction(ideas))
+      .attr("stroke", "blue")
+      .attr("stroke-width", 2)
+      .attr("fill", "none");
+  });
+
+  /*
+  var lineGraph = svg.append("path")
     .attr("d", lineFunction(ideas))
     .attr("stroke", "blue")
     .attr("stroke-width", 2)
     .attr("fill", "none");
+    */
 
-  });
 </script>
 </body>
 </html>
