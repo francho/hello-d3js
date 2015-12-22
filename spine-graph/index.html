@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="//d3js.org/d3.v3.min.js"></script>
+  <style>
+    .link {
+      stroke: steelblue;
+      stroke-opacity: .4;
+      fill: none;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+<script>
+  var diameter = 960,
+    radius = diameter / 2,
+    innerRadius = radius - 120;
+
+  var cluster = d3.layout.cluster()
+    .size([360, innerRadius])
+    .sort(null)
+    .value(function(d) {
+      return d.size;
+    });
+
+  var bundle = d3.layout.bundle();
+
+  var svg = d3.select("body").append("svg")
+    .attr("width", diameter)
+    .attr("height", diameter)
+    .append("g")
+    .attr("transform", "translate(" + radius + "," + radius + ")");
+
+  var link = svg.append("g").selectAll(".link"),
+    node = svg.append("g").selectAll(".node");
+
+  d3.json("data.json", function(error, ideas) {
+    if (error) throw error;
+
+    var width=10, r=2;
+    var xScale = d3.scale.linear()
+      .range([5, width-r])
+      .domain([1,51]);
+
+    node = node
+      .data(ideas)
+      .enter().append("text")
+      .attr("class", "node")
+      .attr("transform", function() {
+        return "rotate(-45)";
+      })
+      .attr("dy", function(d,i) {
+        return i*20;
+      })
+      .attr("dx", function(d,i) {
+        return i*20;
+      })
+      .text(function(d) {
+        return d.name;
+      });
+
+  });
+</script>
+</body>
+</html>

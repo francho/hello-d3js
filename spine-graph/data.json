@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "name": "idea 1",
+    "links": []
+  },
+  {
+    "id": 2,
+    "name": "idea 2",
+    "links": [1]
+  },
+  {
+    "id": 3,
+    "name": "idea 3",
+    "links": [1]
+  }
+]
