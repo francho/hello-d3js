@@ -58,6 +58,9 @@
       .attr("dx", function(d,i) {
         return i*20;
       })
+      .attr("id", function(d,i){
+        return ( 'idea-'+i );
+      })
       .text(function(d) {
         return d.name;
       });
