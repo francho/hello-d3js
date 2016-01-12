@@ -5,6 +5,15 @@
   <title>Force Layout Example 1</title>
   <style>
 
+    svg {
+      border: 1px solid #777777;
+    }
+
+    .spine {
+      stroke: #dedede;
+      stroke-width: 1px;
+    }
+
     .node {
       fill: #ccc;
       stroke: #fff;
@@ -12,13 +21,25 @@
     }
 
     .link {
-      stroke: #777;
-      stroke-width: 2px;
+      stroke: #ccc;
+      stroke-width: 3px;
       fill: none;
+      opacity: 0.5;
     }
 
     .label {
       color: #777;
+      font-family: Helvetica;
+      font-size: 0.8em;
+
+      max-width: 62px;
+      overflow: hidden;
+    }
+
+    .selected {
+      stroke: #00AAFF;
+      opacity: 1;
+      max-width: 100%;
     }
 
   </style>
@@ -31,8 +52,8 @@
   // a size that's convenient for displaying the graphic on
   // http://jsDataV.is
 
-  var width = 640,
-    height = 480;
+  var width = window.innerWidth - 30,
+    height = window.innerHeight - 30;
 
   // Define the data for the example. In general, a force layout
   // requires two data arrays. The first array, here named `nodes`,
@@ -50,24 +71,36 @@
   // get a consistent application of the layout which lets us see the
   // effects of different properties.
 
-  var nodes = [
-    { name: 'idea 1', x:1, y:0 },
-    { name: 'idea 2', x:2, y:0 },
-    { name: 'idea 3', x:3, y:0 },
-    { name: 'idea 4', x:4, y:0 }
+  function fillWithDummyIdeas() {
+    var numNodes = 5;
 
-  ];
+    function getRandomText() {
+      var lorenIpsum = 'Lorem fistrum a wan quietooor no te digo trigo por no llamarte Rodrigor por la gloria de mi madre. Ese pedazo de me cago en tus muelas sexuarl diodenoo te va a hasé pupitaa llevame al sircoo papaar papaar. A wan llevame al sircoo apetecan de la pradera torpedo ese pedazo de fistro jarl. Se calle ustée torpedo a wan ese que llega. De la pradera qué dise usteer pecador diodenoo al ataquerl fistro a wan se calle ustée amatomaa sexuarl pupita. Pecador está la cosa muy malar amatomaa jarl fistro ese que llega llevame al sircoo diodenoo ese hombree llevame al sircoo. Tiene musho peligro papaar papaar no te digo trigo por no llamarte Rodrigor tiene musho peligro benemeritaar está la cosa muy malar al ataquerl. Pupita quietooor diodenoo mamaar no te digo trigo por no llamarte Rodrigor llevame al sircoo te voy a borrar el cerito sexuarl no te digo trigo por no llamarte Rodrigor amatomaa.';
+      return lorenIpsum.substring(getRandomInt(0, lorenIpsum.length));
+    }
 
-  // The `links` array contains objects with a `source` and a `target`
-  // property. The values of those properties are the indices in
-  // the `nodes` array of the two endpoints of the link.
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
 
-  var links = [
-    { source: 0, target: 1 },
-    { source: 0, target: 2 },
-    { source: 0, target: 3 },
-    { source: 1, target: 3 },
-  ];
+    for (var i = 0; i <= numNodes; i++) {
+      var randomText =
+      nodes.push({name: 'idea ' + i + ' - ' + getRandomText(), x: i, y: 0})
+    }
+
+    for (var source = 0; source < numNodes; source++) {
+      var linksCount = getRandomInt(0, numNodes - 1);
+      for (var target = 0; target <= linksCount; target++) {
+        if (source != target) {
+          links.push({source: source, target: getRandomInt(0, numNodes)})
+        }
+      }
+    }
+  }
+  var nodes = [];
+  var links = [];
+
+  fillWithDummyIdeas();
 
   // Here's were the code begins. We start off by creating an SVG
   // container to hold the visualization. We only need to specify
@@ -80,7 +113,6 @@
   }
 
   function linkArc(d) {
-    console.log(d);
     var dx = d.target.x - d.source.x,
       dy = d.target.y - d.source.y,
       dr = Math.sqrt(dx * dx + dy * dy);
@@ -103,17 +135,18 @@
 //    .nodes(nodes)
 //    .links(links);
 
+  svg.append('line')
+    .attr('class', 'spine')
+    .attr('x1', 0)
+    .attr('x2', width)
+    .attr('y1', height/2)
+    .attr('y2', height/2);
+
 
   var force = d3.layout.force()
     .nodes(nodes)
     .links(links)
-    .size([width, height])
-    .charge(-300)
-    .start();
-
-
-
-
+    .size([width, height]);
 
   // There's one more property of the layout we need to define,
   // its `linkDistance`. That's generally a configurable value and,
@@ -151,17 +184,29 @@
 
   var nodeEnter = svg.selectAll('.node')
     .data(nodes)
-    .enter()
+    .enter();
 
 
   var node= nodeEnter
     .append('circle')
-    .attr('class', 'node');
+    .attr('class', function(d) {
+      return 'node i' + d.index;
+    })
+    .on('mouseover', function(d) {
+      d3.selectAll('.i'+ d.index).classed('selected',true);
+    })
+    .on('mouseout', function(d) {
+      d3.selectAll('.link').classed('selected',false);
+      d3.selectAll('.node').classed('selected',false);
+      d3.selectAll('.label').classed('selected',false);
+    });
 
   var label=nodeEnter
     .append('text')
-    .attr('class', 'label');
-
+    .attr('class', function(d, index) {
+      console.log(d3.select(this));
+      return 'label i' + index;
+    });
 
   // We're about to tell the force layout to start its
   // calculations. We do, however, want to know when those
@@ -187,21 +232,28 @@
 
     node.attr('r', 5)
       .attr('cx', function(d) { return d.x; })
-      .attr('cy', function(d) { return d.y; });
+      .attr('cy', function(d) { return d.y; })
 
     label
       .text(function(d) { return d.name; })
       .attr('dx', function(d) { return d.x; })
-      .attr('dy', function(d) { return d.y; });
-
+      .attr('dy', function(d) { return d.y; })
+      .attr('transform', function(d) {
+        var angle = -45;
+        var rotation = "rotate(" + angle + "," + d.x + "," + d.y +")";
+        return rotation;
+      });
 
     // We also need to update positions of the links.
     // For those elements, the force layout sets the
     // `source` and `target` properties, specifying
     // `x` and `y` values in each case.
 
-
-    link.attr('d', linkArc);
+    link
+      .attr('class', function(d) {
+        return 'link i' + d.source.index + ' i' + d.target.index;
+      })
+      .attr('d', linkArc);
 
 //    link.attr('x1', function(d) { return d.source.x; })
 //      .attr('y1', function(d) { return d.source.y; })
