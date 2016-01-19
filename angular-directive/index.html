@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.js"></script>
+
+
+  <style>
+    .chart {
+      background: #eee;
+      padding: 3px;
+    }
+
+    .chart div {
+      width: 0;
+      transition: all 1s ease-out;
+      -moz-transition: all 1s ease-out;
+      -webkit-transition: all 1s ease-out;
+    }
+
+    .chart div {
+      font: 10px sans-serif;
+      background-color: steelblue;
+      text-align: right;
+      padding: 3px;
+      margin: 5px;
+      color: white;
+      box-shadow: 2px 2px 2px #666;
+    }
+  </style>
+
+
+  <script>
+    angular.module('myApp', [])
+      .service('D3LoaderService', function($document, $q, $rootScope) {
+        var d = $q.defer();
+
+        function onScriptLoad() {
+          // Load client in the browser
+          $rootScope.$apply(function() {
+            d.resolve(window.d3);
+          });
+        }
+
+        // Create a script tag with d3 as the source
+        // and call our onScriptLoad callback when it
+        // has been loaded
+        var scriptTag = $document[0].createElement('script');
+        scriptTag.type = 'text/javascript';
+        scriptTag.async = true;
+        scriptTag.src = 'http://d3js.org/d3.v3.min.js';
+        scriptTag.onreadystatechange = function() {
+          if (this.readyState == 'complete') onScriptLoad();
+        };
+        scriptTag.onload = onScriptLoad;
+
+        var s = $document[0].getElementsByTagName('body')[0];
+        s.appendChild(scriptTag);
+
+        return {
+          d3: function() {
+            return d.promise;
+          }
+        };
+
+      })
+      .directive('barsChart', function($window,D3LoaderService) {
+
+        function renderD3(selector, data) {
+          console.log('renderD3');
+          var chart = d3.select(selector);
+          chart.selectAll('*').remove();
+          chart.append("div").attr("class", "chart")
+            .selectAll('div')
+            .data(data).enter().append("div")
+            .transition().ease("elastic")
+            .style("width", function(d) {
+              return d + "%";
+            })
+            .text(function(d) {
+              return d + "%";
+            });
+        }
+
+
+        return {
+          restrict: 'E',
+          replace: false,
+          scope: {data: '=chartData'},
+          link: function(scope, element, attrs) {
+
+            D3LoaderService.d3().then(function() {
+              redraw = function() {
+                renderD3(element[0], scope.data);
+              };
+
+              scope.$watchCollection('data', redraw);
+
+            });
+          }
+        };
+      })
+
+      .controller('MainCtrl', function($scope) {
+        $scope.myData = [2, 3];
+        $scope.newData = null;
+        $scope.addData = function() {
+          var numVal = parseInt($scope.newData) || 0;
+          $scope.myData.push(numVal);
+          $scope.newData = null;
+        }
+      });
+  </script>
+</head>
+<body>
+
+<div ng-app="myApp" ng-controller="MainCtrl">
+
+  <input type="number" ng-model="newData"><input type="submit" ng-click="addData()" value="add">
+  {{myData}}
+
+  <input type="checkbox" ng-model="showChart"> Show chart
+
+  <bars-chart chart-data="myData" ng-if="showChart"></bars-chart>
+</div>
+
+
+</body>
+</html>
